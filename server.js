@@ -1,4 +1,4 @@
-// server.js
+// server.js - FIXED VERSION - ĐẦY ĐỦ
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs').promises;
@@ -117,19 +117,35 @@ const writeJSON = async (filePath, data) => {
 };
 
 const logActivity = async (uid, action, details = {}) => {
-  const logs = await readJSON(activityLogFile);
-  logs.push({
-    id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    uid,
-    action,
-    details,
-    timestamp: new Date().toISOString(),
-    ip: details.ip || 'unknown'
-  });
-  
-  // Giữ tối đa 10000 logs
-  if (logs.length > 10000) logs.shift();
-  await writeJSON(activityLogFile, logs);
+  try {
+    const logs = await readJSON(activityLogFile);
+    logs.push({
+      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      uid,
+      action,
+      details,
+      timestamp: new Date().toISOString(),
+      ip: details.ip || 'unknown'
+    });
+    
+    if (logs.length > 10000) {
+      logs.splice(0, logs.length - 10000);
+    }
+    
+    await writeJSON(activityLogFile, logs);
+  } catch (error) {
+    console.error('Failed to log activity:', error);
+  }
+};
+
+const safeDeleteFile = async (filePath) => {
+  try {
+    await fs.access(filePath);
+    await fs.unlink(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 // ============ MULTER CONFIGS ============
@@ -151,7 +167,11 @@ const createMulterConfig = (destination, allowedTypes, maxSize) => {
     }
   };
 
-  return multer({ storage, fileFilter, limits: { fileSize: maxSize } });
+  return multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: maxSize }
+  });
 };
 
 const uploadImage = createMulterConfig(productsDir, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE);
@@ -188,8 +208,6 @@ app.use('/uploads', express.static(uploadsDir, {
 }));
 
 // ============ AUTH ROUTES ============
-
-// Đăng ký
 app.post('/auth/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
@@ -198,10 +216,22 @@ app.post('/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'All fields required' });
     }
 
+    if (username.length < 3 || username.length > 30) {
+      return res.status(400).json({ error: 'Username must be 3-30 characters' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
     const users = await readJSON(usersFile);
-    
+
     if (users.find(u => u.username === username)) {
       return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    if (users.find(u => u.email === email)) {
+      return res.status(400).json({ error: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -218,7 +248,6 @@ app.post('/auth/register', async (req, res) => {
 
     users.push(newUser);
     await writeJSON(usersFile, users);
-
     await logActivity(newUser.uid, 'register', { ip: req.ip });
 
     res.json({
@@ -232,7 +261,6 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-// Đăng nhập
 app.post('/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -249,7 +277,6 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Cập nhật lastLogin
     user.lastLogin = new Date().toISOString();
     await writeJSON(usersFile, users);
 
@@ -280,8 +307,6 @@ app.post('/auth/login', async (req, res) => {
 });
 
 // ============ USER ROUTES ============
-
-// Lấy thông tin user
 app.get('/user/profile', authenticateToken, async (req, res) => {
   try {
     const users = await readJSON(usersFile);
@@ -309,7 +334,6 @@ app.get('/user/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Yêu cầu nạp tiền
 app.post('/user/deposit-request', authenticateToken, async (req, res) => {
   try {
     const { amount, method } = req.body;
@@ -318,12 +342,16 @@ app.post('/user/deposit-request', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
+    if (amount < 10000) {
+      return res.status(400).json({ error: 'Minimum deposit is 10,000' });
+    }
+
     const transactions = await readJSON(transactionsFile);
     const transaction = {
       id: `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       uid: req.user.uid,
       type: 'deposit',
-      amount,
+      amount: parseFloat(amount),
       method: method || 'bank_transfer',
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -332,7 +360,6 @@ app.post('/user/deposit-request', authenticateToken, async (req, res) => {
 
     transactions.push(transaction);
     await writeJSON(transactionsFile, transactions);
-
     await logActivity(req.user.uid, 'deposit_request', { amount, method });
 
     res.json({
@@ -345,7 +372,6 @@ app.post('/user/deposit-request', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin duyệt nạp tiền
 app.post('/admin/approve-deposit/:txnId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { txnId } = req.params;
@@ -366,14 +392,12 @@ app.post('/admin/approve-deposit/:txnId', authenticateToken, isAdmin, async (req
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Cập nhật số dư
-    user.balance += transaction.amount;
+    user.balance = (user.balance || 0) + transaction.amount;
     transaction.status = 'completed';
     transaction.processedAt = new Date().toISOString();
 
     await writeJSON(transactionsFile, transactions);
     await writeJSON(usersFile, users);
-
     await logActivity(req.user.uid, 'approve_deposit', { txnId, amount: transaction.amount });
 
     res.json({
@@ -387,28 +411,29 @@ app.post('/admin/approve-deposit/:txnId', authenticateToken, isAdmin, async (req
 });
 
 // ============ CATEGORY ROUTES ============
-
-// Thêm danh mục (Admin)
 app.post('/admin/categories', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { name, description } = req.body;
 
-    if (!name) {
+    if (!name || name.trim().length === 0) {
       return res.status(400).json({ error: 'Category name required' });
     }
 
     const categories = await readJSON(categoriesFile);
     
+    if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+      return res.status(400).json({ error: 'Category name already exists' });
+    }
+
     const category = {
       id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      description: description || '',
+      name: name.trim(),
+      description: description?.trim() || '',
       createdAt: new Date().toISOString()
     };
 
     categories.push(category);
     await writeJSON(categoriesFile, categories);
-
     await logActivity(req.user.uid, 'create_category', { categoryId: category.id });
 
     res.json({ success: true, category });
@@ -417,7 +442,6 @@ app.post('/admin/categories', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Lấy danh sách danh mục
 app.get('/categories', async (req, res) => {
   try {
     const categories = await readJSON(categoriesFile);
@@ -427,7 +451,6 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-// Sửa danh mục (Admin)
 app.put('/admin/categories/:categoryId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -440,10 +463,16 @@ app.put('/admin/categories/:categoryId', authenticateToken, isAdmin, async (req,
       return res.status(404).json({ error: 'Category not found' });
     }
 
+    if (name && name !== categories[categoryIndex].name) {
+      if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+        return res.status(400).json({ error: 'Category name already exists' });
+      }
+    }
+
     categories[categoryIndex] = {
       ...categories[categoryIndex],
-      name: name || categories[categoryIndex].name,
-      description: description !== undefined ? description : categories[categoryIndex].description,
+      name: name?.trim() || categories[categoryIndex].name,
+      description: description !== undefined ? description.trim() : categories[categoryIndex].description,
       updatedAt: new Date().toISOString()
     };
 
@@ -456,24 +485,22 @@ app.put('/admin/categories/:categoryId', authenticateToken, isAdmin, async (req,
   }
 });
 
-// Xóa danh mục (Admin)
 app.delete('/admin/categories/:categoryId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { categoryId } = req.params;
     const categories = await readJSON(categoriesFile);
-    
     const categoryIndex = categories.findIndex(c => c.id === categoryId);
+
     if (categoryIndex === -1) {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    // Kiểm tra xem có sản phẩm nào dùng category này không
     const products = await readJSON(productsFile);
     const hasProducts = products.some(p => p.categoryId === categoryId);
 
     if (hasProducts) {
-      return res.status(400).json({ 
-        error: 'Cannot delete category with existing products. Remove products first.' 
+      return res.status(400).json({
+        error: 'Cannot delete category with existing products. Remove products first.'
       });
     }
 
@@ -488,8 +515,6 @@ app.delete('/admin/categories/:categoryId', authenticateToken, isAdmin, async (r
 });
 
 // ============ PRODUCT ROUTES ============
-
-// Tạo sản phẩm (Admin)
 app.post('/admin/products', authenticateToken, isAdmin, uploadImage.single('image'), async (req, res) => {
   try {
     const { name, description, price, categoryId, downloadLink, demoLink, isPinned } = req.body;
@@ -498,17 +523,21 @@ app.post('/admin/products', authenticateToken, isAdmin, uploadImage.single('imag
       return res.status(400).json({ error: 'Name and price required' });
     }
 
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({ error: 'Invalid price' });
+    }
+
     const products = await readJSON(productsFile);
-    
     const product = {
       id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      description: description || '',
-      price: parseFloat(price),
+      name: name.trim(),
+      description: description?.trim() || '',
+      price: parsedPrice,
       categoryId: categoryId || null,
       image: req.file ? `/uploads/products/${req.file.filename}` : null,
-      downloadLink: downloadLink || null,
-      demoLink: demoLink || null,
+      downloadLink: downloadLink?.trim() || null,
+      demoLink: demoLink?.trim() || null,
       isPinned: isPinned === 'true',
       createdBy: req.user.uid,
       createdAt: new Date().toISOString(),
@@ -517,7 +546,6 @@ app.post('/admin/products', authenticateToken, isAdmin, uploadImage.single('imag
 
     products.push(product);
     await writeJSON(productsFile, products);
-
     await logActivity(req.user.uid, 'create_product', { productId: product.id });
 
     res.json({ success: true, product });
@@ -527,15 +555,24 @@ app.post('/admin/products', authenticateToken, isAdmin, uploadImage.single('imag
   }
 });
 
-// Upload file sản phẩm
 app.post('/admin/products/:productId/upload-file', authenticateToken, isAdmin, uploadFile.single('file'), async (req, res) => {
   try {
     const { productId } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
     const products = await readJSON(productsFile);
-    
     const product = products.find(p => p.id === productId);
+
     if (!product) {
+      await safeDeleteFile(path.join(filesDir, req.file.filename));
       return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (product.downloadFile) {
+      await safeDeleteFile(path.join(__dirname, product.downloadFile));
     }
 
     product.downloadFile = `/uploads/files/${req.file.filename}`;
@@ -550,7 +587,6 @@ app.post('/admin/products/:productId/upload-file', authenticateToken, isAdmin, u
   }
 });
 
-// Lấy danh sách sản phẩm
 app.get('/products', async (req, res) => {
   try {
     const { category, search, pinned } = req.query;
@@ -562,7 +598,7 @@ app.get('/products', async (req, res) => {
 
     if (search) {
       const searchLower = search.toLowerCase();
-      products = products.filter(p => 
+      products = products.filter(p =>
         p.name.toLowerCase().includes(searchLower) ||
         p.description.toLowerCase().includes(searchLower)
       );
@@ -572,7 +608,6 @@ app.get('/products', async (req, res) => {
       products = products.filter(p => p.isPinned);
     }
 
-    // Sắp xếp: pinned lên đầu, sau đó theo ngày tạo
     products.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
@@ -585,7 +620,6 @@ app.get('/products', async (req, res) => {
   }
 });
 
-// Sửa sản phẩm (Admin)
 app.put('/admin/products/:productId', authenticateToken, isAdmin, uploadImage.single('image'), async (req, res) => {
   try {
     const { productId } = req.params;
@@ -595,31 +629,36 @@ app.put('/admin/products/:productId', authenticateToken, isAdmin, uploadImage.si
     const productIndex = products.findIndex(p => p.id === productId);
 
     if (productIndex === -1) {
+      if (req.file) {
+        await safeDeleteFile(path.join(productsDir, req.file.filename));
+      }
       return res.status(404).json({ error: 'Product not found' });
     }
 
     const product = products[productIndex];
 
-    // Xóa ảnh cũ nếu upload ảnh mới
     if (req.file && product.image) {
-      try {
-        const oldImagePath = path.join(__dirname, product.image);
-        await fs.unlink(oldImagePath);
-      } catch (err) {
-        console.log('Old image not found or already deleted');
-      }
+      await safeDeleteFile(path.join(__dirname, product.image));
     }
 
-    // Cập nhật thông tin
+    let updatedPrice = product.price;
+    if (price !== undefined) {
+      const parsedPrice = parseFloat(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        return res.status(400).json({ error: 'Invalid price' });
+      }
+      updatedPrice = parsedPrice;
+    }
+
     products[productIndex] = {
       ...product,
-      name: name || product.name,
-      description: description !== undefined ? description : product.description,
-      price: price ? parseFloat(price) : product.price,
+      name: name?.trim() || product.name,
+      description: description !== undefined ? description.trim() : product.description,
+      price: updatedPrice,
       categoryId: categoryId !== undefined ? categoryId : product.categoryId,
       image: req.file ? `/uploads/products/${req.file.filename}` : product.image,
-      downloadLink: downloadLink !== undefined ? downloadLink : product.downloadLink,
-      demoLink: demoLink !== undefined ? demoLink : product.demoLink,
+      downloadLink: downloadLink !== undefined ? downloadLink?.trim() : product.downloadLink,
+      demoLink: demoLink !== undefined ? demoLink?.trim() : product.demoLink,
       isPinned: isPinned !== undefined ? isPinned === 'true' : product.isPinned,
       updatedAt: new Date().toISOString()
     };
@@ -634,37 +673,24 @@ app.put('/admin/products/:productId', authenticateToken, isAdmin, uploadImage.si
   }
 });
 
-// Xóa sản phẩm (Admin)
 app.delete('/admin/products/:productId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { productId } = req.params;
     const products = await readJSON(productsFile);
-    
     const productIndex = products.findIndex(p => p.id === productId);
+
     if (productIndex === -1) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
     const product = products[productIndex];
 
-    // Xóa ảnh
     if (product.image) {
-      try {
-        const imagePath = path.join(__dirname, product.image);
-        await fs.unlink(imagePath);
-      } catch (err) {
-        console.log('Image file not found');
-      }
+      await safeDeleteFile(path.join(__dirname, product.image));
     }
 
-    // Xóa file tải
     if (product.downloadFile) {
-      try {
-        const filePath = path.join(__dirname, product.downloadFile);
-        await fs.unlink(filePath);
-      } catch (err) {
-        console.log('Download file not found');
-      }
+      await safeDeleteFile(path.join(__dirname, product.downloadFile));
     }
 
     products.splice(productIndex, 1);
@@ -678,7 +704,7 @@ app.delete('/admin/products/:productId', authenticateToken, isAdmin, async (req,
   }
 });
 
-// Mua sản phẩm
+// ============ MUA SẢN PHẨM - ĐÃ SỬA LỖI NGHIÊM TRỌNG ============
 app.post('/products/:productId/purchase', authenticateToken, async (req, res) => {
   try {
     const { productId } = req.params;
@@ -691,26 +717,31 @@ app.post('/products/:productId/purchase', authenticateToken, async (req, res) =>
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    const user = users.find(u => u.uid === req.user.uid);
-    if (!user) {
+    const userIndex = users.findIndex(u => u.uid === req.user.uid);
+    if (userIndex === -1) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    const user = users[userIndex];
 
     if (user.balance < product.price) {
       return res.status(400).json({ error: 'Insufficient balance' });
     }
 
     // Trừ tiền user
-    user.balance -= product.price;
+    users[userIndex].balance -= product.price;
 
     // Cộng tiền admin
-    const admin = users.find(u => u.role === 'admin');
-    if (admin) {
-      admin.totalRevenue = (admin.totalRevenue || 0) + product.price;
+    const adminIndex = users.findIndex(u => u.role === 'admin');
+    if (adminIndex !== -1) {
+      users[adminIndex].totalRevenue = (users[adminIndex].totalRevenue || 0) + product.price;
     }
 
     // Tăng số lượt bán
-    product.sales = (product.sales || 0) + 1;
+    const productIndex = products.findIndex(p => p.id === productId);
+    if (productIndex !== -1) {
+      products[productIndex].sales = (products[productIndex].sales || 0) + 1;
+    }
 
     // Tạo giao dịch
     const transaction = {
@@ -725,7 +756,8 @@ app.post('/products/:productId/purchase', authenticateToken, async (req, res) =>
 
     transactions.push(transaction);
 
-    await writeJSON(users, users);
+    // LƯU DỮ LIỆU - ĐÂY LÀ LỖI NGHIÊM TRỌNG ĐÃ ĐƯỢC SỬA
+    await writeJSON(usersFile, users);  // ĐÃ SỬA: Trước đây là writeJSON(users, users)
     await writeJSON(productsFile, products);
     await writeJSON(transactionsFile, transactions);
 
@@ -736,7 +768,7 @@ app.post('/products/:productId/purchase', authenticateToken, async (req, res) =>
       message: 'Purchase successful',
       downloadLink: product.downloadLink,
       downloadFile: product.downloadFile,
-      newBalance: user.balance
+      newBalance: users[userIndex].balance
     });
   } catch (error) {
     console.error('Purchase error:', error);
@@ -745,8 +777,6 @@ app.post('/products/:productId/purchase', authenticateToken, async (req, res) =>
 });
 
 // ============ MUSIC ROUTES ============
-
-// Upload nhạc
 app.post('/music/upload', authenticateToken, uploadMusic.single('music'), async (req, res) => {
   try {
     const { title, artist } = req.body;
@@ -756,7 +786,6 @@ app.post('/music/upload', authenticateToken, uploadMusic.single('music'), async 
     }
 
     const musicUrl = `/uploads/music/${req.file.filename}`;
-
     await logActivity(req.user.uid, 'upload_music', { title, filename: req.file.filename });
 
     res.json({
@@ -774,7 +803,6 @@ app.post('/music/upload', authenticateToken, uploadMusic.single('music'), async 
   }
 });
 
-// Lấy danh sách nhạc
 app.get('/music', async (req, res) => {
   try {
     const files = await fs.readdir(musicDir);
@@ -794,22 +822,17 @@ app.get('/music', async (req, res) => {
   }
 });
 
-// Xóa nhạc
 app.delete('/music/:filename', authenticateToken, async (req, res) => {
   try {
-    const filename = path.basename(req.params.filename); // Chặn path traversal
+    const filename = path.basename(req.params.filename);
     const filePath = path.join(musicDir, filename);
 
-    // Kiểm tra file có tồn tại
-    try {
-      await fs.access(filePath);
-    } catch {
+    const deleted = await safeDeleteFile(filePath);
+    if (!deleted) {
       return res.status(404).json({ error: 'Music file not found' });
     }
 
-    await fs.unlink(filePath);
     await logActivity(req.user.uid, 'delete_music', { filename });
-
     res.json({ success: true, message: 'Music deleted' });
   } catch (error) {
     console.error('Delete music error:', error);
@@ -818,8 +841,6 @@ app.delete('/music/:filename', authenticateToken, async (req, res) => {
 });
 
 // ============ ADMIN ROUTES ============
-
-// Thống kê admin
 app.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   try {
     const users = await readJSON(usersFile);
@@ -830,7 +851,6 @@ app.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
     const totalUsers = users.filter(u => u.role === 'user').length;
     const totalProducts = products.length;
     const totalRevenue = admin?.totalRevenue || 0;
-    
     const completedTransactions = transactions.filter(t => t.type === 'purchase' && t.status === 'completed');
     const totalSales = completedTransactions.length;
 
@@ -849,7 +869,6 @@ app.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Lịch sử hoạt động
 app.get('/admin/activity-log', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { uid, limit = 100 } = req.query;
@@ -867,7 +886,6 @@ app.get('/admin/activity-log', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Danh sách user
 app.get('/admin/users', authenticateToken, isAdmin, async (req, res) => {
   try {
     const users = await readJSON(usersFile);
@@ -887,7 +905,6 @@ app.get('/admin/users', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Sửa thông tin user (Admin)
 app.put('/admin/users/:uid', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { uid } = req.params;
@@ -900,7 +917,6 @@ app.put('/admin/users/:uid', authenticateToken, isAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Không cho phép sửa admin chính
     if (users[userIndex].role === 'admin' && users[userIndex].uid !== req.user.uid) {
       return res.status(403).json({ error: 'Cannot modify other admin accounts' });
     }
@@ -923,18 +939,16 @@ app.put('/admin/users/:uid', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Xóa user (Admin)
 app.delete('/admin/users/:uid', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { uid } = req.params;
     const users = await readJSON(usersFile);
-    
     const userIndex = users.findIndex(u => u.uid === uid);
+
     if (userIndex === -1) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Không cho phép xóa admin hoặc chính mình
     if (users[userIndex].role === 'admin') {
       return res.status(403).json({ error: 'Cannot delete admin accounts' });
     }
@@ -953,13 +967,33 @@ app.delete('/admin/users/:uid', authenticateToken, isAdmin, async (req, res) => 
   }
 });
 
-// Xóa giao dịch (Admin)
+app.get('/admin/transactions', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { status, type, limit = 100 } = req.query;
+    let transactions = await readJSON(transactionsFile);
+
+    if (status) {
+      transactions = transactions.filter(t => t.status === status);
+    }
+
+    if (type) {
+      transactions = transactions.filter(t => t.type === type);
+    }
+
+    transactions = transactions.slice(-parseInt(limit)).reverse();
+
+    res.json({ success: true, data: transactions });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
 app.delete('/admin/transactions/:txnId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { txnId } = req.params;
     const transactions = await readJSON(transactionsFile);
-    
     const txnIndex = transactions.findIndex(t => t.id === txnId);
+
     if (txnIndex === -1) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
@@ -974,13 +1008,12 @@ app.delete('/admin/transactions/:txnId', authenticateToken, isAdmin, async (req,
   }
 });
 
-// Xóa log hoạt động (Admin)
 app.delete('/admin/activity-log/:logId', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { logId } = req.params;
     const logs = await readJSON(activityLogFile);
-    
     const logIndex = logs.findIndex(l => l.id === logId);
+
     if (logIndex === -1) {
       return res.status(404).json({ error: 'Log not found' });
     }
@@ -994,7 +1027,6 @@ app.delete('/admin/activity-log/:logId', authenticateToken, isAdmin, async (req,
   }
 });
 
-// Xóa tất cả logs (Admin)
 app.delete('/admin/activity-log', authenticateToken, isAdmin, async (req, res) => {
   try {
     await writeJSON(activityLogFile, []);
@@ -1006,20 +1038,23 @@ app.delete('/admin/activity-log', authenticateToken, isAdmin, async (req, res) =
 
 // ============ HEALTH CHECK ============
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // ============ ERROR HANDLING ============
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File too large' });
     }
     return res.status(400).json({ error: err.message });
   }
-  
+
   res.status(500).json({ error: 'Internal server error' });
 });
 
