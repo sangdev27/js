@@ -10,11 +10,10 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0f0f23;
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
@@ -24,7 +23,6 @@
             align-items: center;
             padding: 20px;
         }
-
         .container {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
@@ -35,7 +33,6 @@
             width: 100%;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-
         .typing-box {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(99, 102, 241, 0.3);
@@ -46,7 +43,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .typing-box::before {
             content: '';
             position: absolute;
@@ -56,14 +52,12 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
         }
-
         .typing-text {
             font-size: 18px;
             line-height: 1.8;
             color: #e5e7eb;
             font-weight: 400;
         }
-
         .cursor {
             display: inline-block;
             width: 2px;
@@ -72,12 +66,10 @@
             margin-left: 3px;
             animation: blink 0.7s infinite;
         }
-
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
         }
-
         .continue-btn {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
@@ -91,20 +83,16 @@
             display: none;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
-
         .continue-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
         }
-
         .continue-btn:active {
             transform: translateY(0);
         }
-
         .question-section {
             display: none;
         }
-
         .question-title {
             font-size: 24px;
             color: #f3f4f6;
@@ -112,7 +100,6 @@
             font-weight: 700;
             letter-spacing: -0.5px;
         }
-
         textarea {
             width: 100%;
             padding: 18px;
@@ -126,18 +113,15 @@
             transition: all 0.3s;
             color: #e5e7eb;
         }
-
         textarea:focus {
             outline: none;
             border-color: #6366f1;
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
-
         textarea::placeholder {
             color: rgba(229, 231, 235, 0.4);
         }
-
         .submit-btn {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
@@ -151,17 +135,14 @@
             transition: all 0.3s;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
-
         .submit-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
         }
-
         .thank-you-section {
             display: none;
             text-align: center;
         }
-
         .thank-you-title {
             font-size: 36px;
             background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
@@ -171,14 +152,12 @@
             margin-bottom: 16px;
             font-weight: 800;
         }
-
         .thank-you-subtitle {
             font-size: 18px;
             color: #9ca3af;
             margin-bottom: 32px;
             font-weight: 400;
         }
-
         .qr-section {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -186,14 +165,12 @@
             padding: 32px;
             margin: 24px 0;
         }
-
         .qr-section h3 {
             color: #f3f4f6;
             margin-bottom: 20px;
             font-size: 20px;
             font-weight: 700;
         }
-
         .qr-code {
             width: 220px;
             height: 220px;
@@ -206,8 +183,13 @@
             font-size: 13px;
             color: #6b7280;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
         }
-
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         .link-container {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -218,7 +200,6 @@
             gap: 12px;
             margin-top: 16px;
         }
-
         .qr-link {
             font-size: 14px;
             color: #9ca3af;
@@ -226,7 +207,6 @@
             flex: 1;
             text-align: left;
         }
-
         .copy-btn {
             background: rgba(99, 102, 241, 0.2);
             border: 1px solid rgba(99, 102, 241, 0.3);
@@ -239,18 +219,15 @@
             font-weight: 600;
             white-space: nowrap;
         }
-
         .copy-btn:hover {
             background: rgba(99, 102, 241, 0.3);
             color: #c7d2fe;
         }
-
         .copy-btn.copied {
             background: rgba(34, 197, 94, 0.2);
             border-color: rgba(34, 197, 94, 0.3);
             color: #86efac;
         }
-
         .donate-btn {
             background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
             color: white;
@@ -264,33 +241,55 @@
             font-weight: 700;
             box-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
         }
-
         .donate-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 32px rgba(236, 72, 153, 0.5);
         }
 
-        .donation-card {
+        /* Modal cho donation - phần riêng biệt hoàn toàn */
+        .modal {
             display: none;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
+            margin: 10% auto;
             padding: 36px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 90%;
+            max-width: 500px;
             border-radius: 20px;
-            margin-top: 24px;
-            animation: slideDown 0.5s ease;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            position: relative;
+            animation: fadeInModal 0.4s;
         }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes fadeInModal {
+            from {opacity: 0; transform: translateY(-50px);}
+            to {opacity: 1; transform: translateY(0);}
         }
-
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #9ca3af;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #f87171;
+            text-decoration: none;
+        }
         .card-title {
             font-size: 26px;
             font-weight: 800;
@@ -298,7 +297,20 @@
             text-align: center;
             color: #f3f4f6;
         }
-
+        .qr-payment {
+            width: 220px;
+            height: 220px;
+            background: white;
+            margin: 24px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        .qr-payment img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         .card-info {
             background: rgba(0, 0, 0, 0.2);
             padding: 24px;
@@ -306,7 +318,6 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -314,17 +325,14 @@
             margin-bottom: 16px;
             gap: 16px;
         }
-
         .info-row:last-child {
             margin-bottom: 0;
         }
-
         .info-label {
             font-weight: 600;
             color: #9ca3af;
             font-size: 14px;
         }
-
         .info-value {
             font-weight: 600;
             color: #f3f4f6;
@@ -336,26 +344,10 @@
             justify-content: flex-end;
             gap: 12px;
         }
-
         .info-value .copy-btn {
             padding: 6px 12px;
             font-size: 12px;
         }
-
-        .qr-payment {
-            width: 200px;
-            height: 200px;
-            background: white;
-            margin: 24px auto;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-            font-size: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
-
         .donation-note {
             text-align: center;
             font-size: 15px;
@@ -363,10 +355,10 @@
             margin-top: 20px;
             font-weight: 400;
         }
-        
     </style>
 </head>
 <body>
+
     <div class="container">
         <!-- Phần typing text -->
         <div class="typing-box">
@@ -381,68 +373,69 @@
             <button class="submit-btn" onclick="submitFeedback()">Gửi đánh giá ✨</button>
         </div>
 
-        <!-- Phần cảm ơn và QR -->
+        <!-- Phần cảm ơn và QR liên hệ -->
         <div class="thank-you-section" id="thankYouSection">
             <div class="thank-you-title">Cảm ơn bạn!</div>
             <p class="thank-you-subtitle">
                 Ý kiến của bạn rất quan trọng với chúng tôi 💜
             </p>
-
             <div class="qr-section">
-                <h3>📱 Thông tin liên hệ</h3>
+                <h3>CẢM ƠN Ạ</h3>
                 <div class="qr-code">
-                   <img src="https://sf-static.upanhlaylink.com/img/image_202602043934ab68bbe730ecb89133557ac8adcb.jpg" alt="QR liên hệ" class="qr-img">
+                    <img src="https://sf-static.upanhlaylink.com/img/image_20260208810bb119560c1657252332d0fe49ce3a.jpg" alt="QR liên hệ">
                 </div>
                 <div class="link-container">
                     <span class="qr-link" id="contactLink">https://inlove4.vercel.app/index.html?6980dcf9491503a3072442d1</span>
                     <button class="copy-btn" onclick="copyText('contactLink', this)">Copy</button>
                 </div>
             </div>
+            <button class="donate-btn" onclick="openDonationModal()">💝 Ủng hộ tôi</button>
+        </div>
+    </div>
 
-            <button class="donate-btn" onclick="showDonation()">💝 Ủng hộ tôi</button>
-
-            <div class="donation-card" id="donationCard">
-                <div class="card-title">💳 Thông tin chuyển khoản</div>
-                
-                <div class="qr-payment">
-                    [QR Code chuyển khoản]
-                </div>
-
-                <div class="card-info">
-                    <div class="info-row">
-                        <span class="info-label">Ngân hàng</span>
-                        <span class="info-value">
-                            <span id="bankName">Vietcombank</span>
-                            <button class="copy-btn" onclick="copyText('bankName', this)">Copy</button>
-                        </span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Số tài khoản</span>
-                        <span class="info-value">
-                            <span id="accountNumber">1234567890</span>
-                            <button class="copy-btn" onclick="copyText('accountNumber', this)">Copy</button>
-                        </span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Tên tài khoản</span>
-                        <span class="info-value">
-                            <span id="accountName">NGUYEN VAN SANG</span>
-                            <button class="copy-btn" onclick="copyText('accountName', this)">Copy</button>
-                        </span>
-                    </div>
-                </div>
-
-                <p class="donation-note">
-                    Mọi đóng góp của bạn đều rất ý nghĩa! ❤️
-                </p>
+    <!-- Modal donation - phần riêng biệt, popup overlay -->
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDonationModal()">&times;</span>
+            <div class="card-title">💳 Thông tin chuyển khoản</div>
+            
+            <div class="qr-payment">
+                <img src="https://sf-static.upanhlaylink.com/img/image_202602043934ab68bbe730ecb89133557ac8adcb.jpg">
             </div>
+
+            <div class="card-info">
+                <div class="info-row">
+                    <span class="info-label">Ngân hàng</span>
+                    <span class="info-value">
+                        <span id="bankName">bidv</span>
+                        <button class="copy-btn" onclick="copyText('bankName', this)">Copy</button>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Số tài khoản</span>
+                    <span class="info-value">
+                        <span id="accountNumber">8870110660</span>
+                        <button class="copy-btn" onclick="copyText('accountNumber', this)">Copy</button>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tên tài khoản</span>
+                    <span class="info-value">
+                        <span id="accountName">DUONG THI THUY HANG</span>
+                        <button class="copy-btn" onclick="copyText('accountName', this)">Copy</button>
+                    </span>
+                </div>
+            </div>
+            <p class="donation-note">
+                web được duy trì bằng server đam mê nên ủng hộ tui để có động lực duy trì nhaa ❤️
+            </p>
         </div>
     </div>
 
     <script>
-        // Thay YOUR_BOT_TOKEN và YOUR_CHAT_ID bằng thông tin bot Telegram của bạn
-        const TELEGRAM_BOT_TOKEN = '7571735453:AAG8gkZ5pFyt4mCc88RTQOKAq3MqDAURfSQ';  // Ví dụ: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz'
-        const TELEGRAM_CHAT_ID = '7389597494';      // Ví dụ: '123456789'
+        // Telegram config
+        const TELEGRAM_BOT_TOKEN = '7571735453:AAG8gkZ5pFyt4mCc88RTQOKAq3MqDAURfSQ';
+        const TELEGRAM_CHAT_ID = '7389597494';
 
         const messages = [
             "chào bạn",
@@ -469,16 +462,13 @@
 
         function nextMessage() {
             currentMessageIndex++;
-            
             if (currentMessageIndex < messages.length) {
                 document.getElementById('continueBtn').style.display = 'none';
-                // XÓA text cũ và bắt đầu text mới
                 document.getElementById('typingText').innerHTML = '';
                 currentCharIndex = 0;
                 isTyping = true;
                 typeWriter();
             } else {
-                // Hiển thị câu hỏi
                 document.querySelector('.typing-box').style.display = 'none';
                 document.getElementById('continueBtn').style.display = 'none';
                 document.getElementById('questionSection').style.display = 'block';
@@ -487,22 +477,17 @@
 
         async function sendToTelegram(message) {
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            
             const data = {
                 chat_id: TELEGRAM_CHAT_ID,
                 text: `📝 Đánh giá mới từ Sang Dev:\n\n${message}`,
                 parse_mode: 'HTML'
             };
-
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
                 return response.ok;
             } catch (error) {
                 console.error('Lỗi gửi telegram:', error);
@@ -512,22 +497,15 @@
 
         async function submitFeedback() {
             const feedback = document.getElementById('feedbackText').value;
-            
             if (feedback.trim() === '') {
                 alert('Vui lòng nhập ý kiến của bạn!');
                 return;
             }
-
-            // Disable button để tránh spam
             const submitBtn = event.target;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Đang gửi...';
-
-            // Gửi về Telegram
             const success = await sendToTelegram(feedback);
-
             if (success) {
-                // Ẩn phần câu hỏi, hiển thị phần cảm ơn
                 document.getElementById('questionSection').style.display = 'none';
                 document.getElementById('thankYouSection').style.display = 'block';
             } else {
@@ -537,38 +515,39 @@
             }
         }
 
-        function showDonation() {
-            const donationCard = document.getElementById('donationCard');
-            if (donationCard.style.display === 'none' || donationCard.style.display === '') {
-                donationCard.style.display = 'block';
-            } else {
-                donationCard.style.display = 'none';
+        function openDonationModal() {
+            document.getElementById('donationModal').style.display = 'block';
+        }
+
+        function closeDonationModal() {
+            document.getElementById('donationModal').style.display = 'none';
+        }
+
+        // Đóng modal khi click bên ngoài nội dung
+        window.onclick = function(event) {
+            const modal = document.getElementById('donationModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
             }
         }
 
         function copyText(elementId, button) {
             const element = document.getElementById(elementId);
             const text = element.textContent;
-            
-            // Copy to clipboard
-            navigator.clipboard.writeText(text).then(function() {
-                // Change button text
+            navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent;
                 button.textContent = '✓ Copied';
                 button.classList.add('copied');
-                
-                // Reset after 2 seconds
-                setTimeout(function() {
+                setTimeout(() => {
                     button.textContent = originalText;
                     button.classList.remove('copied');
                 }, 2000);
-            }).catch(function(err) {
-                console.error('Could not copy text: ', err);
+            }).catch(err => {
+                console.error('Could not copy:', err);
                 alert('Không thể copy. Vui lòng copy thủ công.');
             });
         }
 
-        // Bắt đầu typing khi trang load
         window.onload = function() {
             isTyping = true;
             typeWriter();
